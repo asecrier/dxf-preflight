@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DXF Preflight – check, fix and quote DXF files for laser and CNC cutting</title>
+<meta name="description" content="Free in-browser DXF checker: finds open contours, duplicate lines and wrong units, fixes them, counts cut length and pierces, and prices the job. Files never leave your computer.">
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1b1f24;--mut:#5b6573;--line:#dde1e7;--acc:#0b6bcb;--bad:#c62828;--warn:#b26a00;--ok:#1b7f3b}
+@media (prefers-color-scheme:dark){:root{--bg:#14171b;--card:#1d2127;--ink:#e8ebef;--mut:#9aa4b2;--line:#323943;--acc:#5aa9ff;--bad:#ff6b6b;--warn:#f0b04a;--ok:#5fd385}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,Segoe UI,Roboto,sans-serif}
+main{max-width:1080px;margin:0 auto;padding:16px}
+h1{font-size:24px;margin:8px 0 4px}h2{font-size:16px;margin:0 0 8px}p.lead{color:var(--mut);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+#drop{border:2px dashed var(--line);text-align:center;padding:28px 12px;cursor:pointer;color:var(--mut)}
+#drop.over{border-color:var(--acc);color:var(--acc)}
+.grid{display:grid;grid-template-columns:1.4fr 1fr;gap:14px}@media(max-width:820px){.grid{grid-template-columns:1fr}}
+canvas{width:100%;height:auto;aspect-ratio:900/760;background:#fff;border:1px solid var(--line);border-radius:8px;display:block}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stat{border:1px solid var(--line);border-radius:8px;padding:8px}.stat b{display:block;font-size:18px}.stat span{color:var(--mut);font-size:12px}
+.issue{padding:6px 8px;border-left:4px solid var(--line);margin:6px 0;background:var(--bg);border-radius:4px}
+.issue.bad{border-color:var(--bad)}.issue.warn{border-color:var(--warn)}.issue.ok{border-color:var(--ok)}
+label{display:block;font-size:13px;color:var(--mut);margin:8px 0 2px}input,select{width:100%;padding:7px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);font:inherit}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+button{background:var(--acc);color:#fff;border:0;border-radius:6px;padding:9px 14px;font:inherit;cursor:pointer;margin:8px 6px 0 0}button.sec{background:transparent;color:var(--acc);border:1px solid var(--acc)}button:disabled{opacity:.5;cursor:not-allowed}
+.hid{display:none}small,.mut{color:var(--mut)}table{width:100%;border-collapse:collapse}td{padding:4px 0;border-bottom:1px solid var(--line)}td:last-child{text-align:right}
+footer{color:var(--mut);font-size:13px;padding:8px 0 24px}
+#print{display:none}
+@media print{body{background:#fff;color:#000}main>*:not(#print){display:none!important}#print{display:block}}
+</style>
+</head>
+<body>
+<main>
+<h1>DXF Preflight</h1>
+<p class="lead">Drop a DXF. Find open contours, duplicate lines and wrong units before they reach the laser or CNC, fix them, and get cut length, pierce count and a price. Everything runs in your browser – your file is never uploaded.</p>
+
+<div class="card" id="drop"><b>Drop a .dxf file here</b> or click to choose<br><small>ASCII DXF · LINE, ARC, CIRCLE, POLYLINE, LWPOLYLINE, SPLINE, ELLIPSE, INSERT blocks</small>
+<input id="file" type="file" accept=".dxf" class="hid"></div>
+<div id="err" class="card hid issue bad"></div>
+
+<div id="result" class="hid">
+ <div class="grid">
+  <div class="card"><h2 id="fname">Preview</h2><canvas id="cv" width="900" height="760"></canvas>
+   <small><span style="color:#c62828">●</span> open end &nbsp; <span style="color:#e08a00">━</span> duplicate &nbsp; <span style="color:#7a1fa2">●</span> near-miss gap</small></div>
+  <div>
+   <div class="card"><h2>Findings</h2><div id="issues"></div></div>
+   <div class="card"><h2>Measurements</h2><div class="stats" id="stats"></div></div>
+  </div>
+ </div>
+ <div class="grid">
+  <div class="card"><h2>Fix &amp; export</h2>
+   <div class="row2"><div><label>File units (check this!)</label><select id="unit"><option>mm</option><option>in</option><option>cm</option><option>m</option><option>ft</option></select></div>
+   <div><label>Force overall width to (mm, optional)</label><input id="forceW" type="number" min="0" step="any" placeholder="leave empty"></div></div>
+   <div class="row2"><div><label>Join gaps up to (mm)</label><input id="joinTol" type="number" min="0" step="any" value="0.1"></div>
+   <div><label>Remove duplicate lines</label><select id="dedupe"><option value="1">Yes</option><option value="0">No</option></select></div></div>
+   <small id="unitNote"></small><br>
+   <button id="fix">Fix and download DXF (mm)</button><button class="sec" id="recheck">Re-check result</button>
+   <p><small>Output contains only LINE, ARC and CIRCLE entities in millimetres. Splines/ellipses are converted to line segments. Always inspect the result in your CAM/laser software before cutting.</small></p>
+  </div>
+  <div class="card"><h2>Quote calculator</h2>
+   <div class="row2"><div><label>Quantity</label><input id="q_qty" type="number" value="1" min="1"></div><div><label>Cut speed (mm/min)</label><input id="q_speed" type="number" value="1500"></div></div>
+   <div class="row2"><div><label>Pierce time (s)</label><input id="q_pierce" type="number" value="0.5" step="any"></div><div><label>Machine rate (per hour)</label><input id="q_rate" type="number" value="60"></div></div>
+   <div class="row2"><div><label>Material price (per m² of sheet)</label><input id="q_mat" type="number" value="40"></div><div><label>Waste / nesting loss (%)</label><input id="q_waste" type="number" value="25"></div></div>
+   <div class="row2"><div><label>Markup (%)</label><input id="q_markup" type="number" value="30"></div><div><label>Setup fee (per job)</label><input id="q_setup" type="number" value="10"></div></div>
+   <div class="row2"><div><label>Minimum charge</label><input id="q_min" type="number" value="25"></div><div><label>Currency label</label><input id="q_cur" value="EUR"></div></div>
+   <table id="qtable"></table>
+   <button class="sec" id="printBtn">Print / save quote as PDF</button>
+   <p><small>Estimate only: bounding-box material area and a constant cut speed. Your own rates are stored in this browser only.</small></p>
+  </div>
+ </div>
+</div>
+
+<div class="card"><h2>What it checks</h2>
+<small>Open contours (gaps that make LightBurn/CAM report "open shapes"), duplicate overlapping entities (double cuts), tiny segments, units (DXF files often do not store them; a wrong unit gives a part 25.4× too big or small), and shapes with branching lines. Overlapping partial lines are not detected. This tool is provided as is, without warranty; verify before cutting expensive material.</small></div>
+<footer id="foot">DXF Preflight · runs offline in your browser · <span id="contact"></span></footer>
+<div id="print"></div>
+</main>
+<script src="dxf.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
