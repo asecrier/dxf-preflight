@@ -1,4 +1,4 @@
-const CONFIG = { contactEmail: '', buyUrl: '' }; // fill in when real contact / checkout exist
+const CONFIG = { contactEmail: 'contact@proiectrutier.ro', buyUrl: '' }; // fill in when real contact / checkout exist
 const $ = id => document.getElementById(id);
 let S = null; // current state
 
