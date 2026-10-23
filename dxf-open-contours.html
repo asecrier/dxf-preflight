@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DXF open contours: why laser software reports open shapes and how to close them</title>
+<meta name="description" content="Open shapes in a DXF stop fill, offset and cut order. Common causes (tiny gaps, split lines, stray fragments) and ways to find and close them.">
+<link rel="canonical" href="https://asecrier.github.io/dxf-preflight/dxf-open-contours.html">
+<link rel="stylesheet" href="style.css"></head><body><main>
+<nav><a href="index.html">DXF Preflight</a> › Open contours</nav>
+<h1>DXF open contours: why your software reports open shapes and how to close them</h1>
+<p>Laser and CAM programs need closed outlines to know which side is inside. An outline that looks closed on screen can still be open by a hair. Then you see warnings about open shapes, kerf offset fails, fills do not work, or an inside cut runs after the outside cut.</p>
+
+<h2>Typical causes</h2>
+<ul>
+<li><b>Tiny gaps</b> between the end of one line and the start of the next, often from rounding when the file was exported.</li>
+<li><b>Outlines built from many separate lines and arcs</b> that were never joined into one polyline.</li>
+<li><b>Stray fragments</b>: a very short leftover line sitting on a corner (one forum case was a fragment 0.0625 units long).</li>
+<li><b>Overlapping segments</b>: two lines on top of each other, so an end point has two partners.</li>
+<li><b>Splines</b> or approximated curves whose end points do not meet the next segment.</li>
+</ul>
+
+<h2>Find them</h2>
+<ul>
+<li>In LightBurn, use the select-open-shapes function to highlight shapes that are not closed.</li>
+<li>In a CAD program, try to hatch the outline: if it does not fill, the loop is open and the command line usually points to the gap.</li>
+<li>Zoom to the corners. Gaps are almost always at a vertex.</li>
+</ul>
+
+<h2>Close them</h2>
+<ul>
+<li>In CAD, use JOIN, or PEDIT with Multiple and Join, and give a small join distance (fuzz) such as 0.05 to 0.1 mm for gaps from rounding.</li>
+<li>Delete stray fragments, then join again.</li>
+<li>Remove duplicates first, so every end point has one partner. See <a href="dxf-duplicate-lines.html">duplicate lines</a>.</li>
+</ul>
+<p>Joining with a larger distance can change the shape. Keep it as small as the gaps allow and look at the result.</p>
+
+<h2>Check a whole file in one step</h2>
+<p>DXF Preflight finds open shapes at 0.001 mm tolerance, draws the loose ends in red, marks near-miss gaps, and joins gaps up to a distance you choose when you export. It reports how many shapes are still open afterwards, so you can see what you have to repair by hand. It runs in your browser and does not upload the file.</p>
+<div class="cta"><a href="index.html"><b>Open DXF Preflight (free)</b></a></div>
+<p>Splines and ellipses are converted to line segments, so check curved parts in your CAM software before cutting.</p>
+<footer><a href="index.html">DXF Preflight</a> · <a href="dxf-wrong-scale.html">Wrong scale</a> · <a href="dxf-duplicate-lines.html">Duplicate lines</a> · <a href="privacy.html">Privacy</a></footer>
+</main></body></html>

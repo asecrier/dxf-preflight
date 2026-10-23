@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duplicate lines in a DXF: double cuts, burnt edges and how to remove them</title>
+<meta name="description" content="Overlapping duplicate entities make a laser or plasma cut the same path twice. Why it happens (vector export, copied geometry) and how to remove duplicates.">
+<link rel="canonical" href="https://asecrier.github.io/dxf-preflight/dxf-duplicate-lines.html">
+<link rel="stylesheet" href="style.css"></head><body><main>
+<nav><a href="index.html">DXF Preflight</a> › Duplicate lines</nav>
+<h1>Duplicate lines in a DXF: double cuts, burnt edges and how to remove them</h1>
+<p>If two identical lines or circles lie on top of each other, the machine cuts that path twice. You get a wider kerf, scorched edges, extra machine time, and sometimes a part that falls out early and gets hit again. On screen you see only one line, so nobody notices.</p>
+
+<h2>Where duplicates come from</h2>
+<ul>
+<li>Vector artwork exported from a drawing program, where a shape is stored once as fill and once as stroke, or a path is stored twice. One Adobe forum thread describes a file that showed double cut lines in nesting software even though Illustrator showed a single line.</li>
+<li>Geometry copied and pasted in place.</li>
+<li>Two parts that share an edge, each with its own copy of it.</li>
+<li>Files merged from several sources.</li>
+</ul>
+
+<h2>How to remove them</h2>
+<ul>
+<li>In AutoCAD and compatible programs, the OVERKILL command deletes duplicate and overlapping objects.</li>
+<li>In LightBurn, use Delete Duplicates from the Edit menu.</li>
+<li>For shared edges, keep one copy so the shared line is cut once.</li>
+</ul>
+<p>Overlapping lines that only partly cover each other are harder: they are not identical, so a simple duplicate check will not catch them. Look at the cut preview in your CAM software.</p>
+
+<h2>See how much is doubled</h2>
+<p>DXF Preflight lists the duplicate entities in a file, shows them in orange on the preview, and tells you how many millimetres of double cutting they add. When you export the repaired DXF they are removed, and the cut length and price are calculated on the cleaned geometry. Partial overlaps are not detected. It runs in your browser and does not upload the file.</p>
+<div class="cta"><a href="index.html"><b>Open DXF Preflight (free)</b></a></div>
+<footer><a href="index.html">DXF Preflight</a> · <a href="dxf-wrong-scale.html">Wrong scale</a> · <a href="dxf-open-contours.html">Open contours</a> · <a href="privacy.html">Privacy</a></footer>
+</main></body></html>
